@@ -39,6 +39,10 @@ cp -rf susfs4ksu/kernel_patches/fs/* common/fs/
 cp -rf susfs4ksu/kernel_patches/include/linux/* common/include/linux/
 
 echo ">>> Applying common kernel SUSFS patch..."
-(cd common && patch -p1 --no-backup-if-mismatch < "$(basename "${COMMON_PATCH_SRC}")") || true
+if ! (cd common && patch -p1 --no-backup-if-mismatch < "$(basename "${COMMON_PATCH_SRC}")"); then
+    echo "[-] SUSFS common kernel patch failed for this kernel tree." >&2
+    find common -type f -name '*.rej' -print -exec sed -n '1,200p' {} \; 2>/dev/null || true
+    exit 1
+fi
 
 echo ">>> SUSFS common-side integration complete!"
