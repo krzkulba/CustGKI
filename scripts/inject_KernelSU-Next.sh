@@ -88,8 +88,6 @@ cd ..
 # ---------------------------------------------------------
 # KernelSU-Next Kbuild Hotfix (Universal)
 # ---------------------------------------------------------
-# Hotpatch strict Kbuild config check to prevent 'make clean' from crashing.
-# Placed here universally to protect both dynamic and stable pipeline channels.
 KBUILD_FILE="${MANAGER_DIR}/kernel/Kbuild"
 if [ -f "$KBUILD_FILE" ]; then
     if grep -q "KernelSU requires either CONFIG_KPROBES" "$KBUILD_FILE"; then
@@ -97,6 +95,21 @@ if [ -f "$KBUILD_FILE" ]; then
         sed -i '/KernelSU requires either CONFIG_KPROBES/d' "$KBUILD_FILE"
     else
         echo ">>> [NOTICE] Strict Kbuild check not found! Upstream likely fixed this. You can remove this hotpatch."
+    fi
+fi
+
+# ---------------------------------------------------------
+# KernelSU-Next SELinux Hide LTO Hotfix (Universal)
+# ---------------------------------------------------------
+# Prevent Clang ThinLTO from stripping the uninitialized fake_state struct 
+# during 5.10 GKI linkage, which causes 'undefined symbol' errors in ld.lld.
+SELINUX_HIDE_FILE="${MANAGER_DIR}/kernel/feature/selinux_hide.c"
+if [ -f "$SELINUX_HIDE_FILE" ]; then
+    if grep -q "struct selinux_state fake_state;" "$SELINUX_HIDE_FILE"; then
+        echo ">>> [HOTFIX] Hiding uninitialized fake_state from LTO global symbol stripper..."
+        sed -i 's/struct selinux_state fake_state;/static struct selinux_state fake_state;/g' "$SELINUX_HIDE_FILE"
+    else
+        echo ">>> [NOTICE] Uninitialized fake_state not found! Upstream likely fixed this. You can remove this hotpatch."
     fi
 fi
 
