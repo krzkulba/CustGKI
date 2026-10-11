@@ -79,6 +79,12 @@ if [ -f "$SELINUX_HIDE" ]; then
         sed -i -E "/$FUNC/ s/__maybe_void/$COMPUTE_AV_RET/g" "$SELINUX_HIDE"
     done
 
+    # 3. LTO-safe fake_state guard: keep the symbol out of the exported global set
+    if grep -q "struct selinux_state fake_state;" "$SELINUX_HIDE"; then
+        echo "  -> Applying LTO-safe fake_state guard..."
+        sed -i 's/struct selinux_state fake_state;/static struct selinux_state fake_state;/g' "$SELINUX_HIDE"
+    fi
+
     echo "  -> Enforced clean, native C declarations for SELinux hooks."
 fi
 
